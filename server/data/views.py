@@ -37,15 +37,16 @@ def get_vertex_types(request):
             filename=names
             break
 
+    pathologist_label_file = current_directory + filename  # data_name+'_annotation.csv'
+    if not filename or not Path(pathologist_label_file).is_file():
+        return HttpResponse(json.dumps({"[empty]": 0}), content_type="application/json")
 
-
-    pathologist_label_file=current_directory + filename #data_name+'_annotation.csv' 
-    pathologist_label=[]
+    pathologist_label = []
     with open(pathologist_label_file) as file:
         csv_file = csv.reader(file, delimiter=",")
         for line in csv_file:
             pathologist_label.append(line)
-    
+
     annotation_dict = dict()
     for i in range (1, len(pathologist_label)):
         if (pathologist_label[i][1] == "") and ("[empty]" not in annotation_dict):
@@ -127,21 +128,22 @@ def load_json(request, edge):
     filename = ""
     for names in items:
         if names.endswith("annotation.csv"):
-            filename=names
-            break    
-    
-    
-    pathologist_label_file = current_directory + filename #data_name+'_annotation.csv' 
-    pathologist_label = []
-    with open(pathologist_label_file) as file:
-        csv_file = csv.reader(file, delimiter=",")
-        for line in csv_file:
-            pathologist_label.append(line)
-        
-    barcode_type=dict() # record the type (annotation) of each spot (barcode)
-    for i in range (1, len(pathologist_label)):
-        barcode_type[pathologist_label[i][0]] = pathologist_label[i][1]
-        
+            filename = names
+            break
+
+    pathologist_label_file = current_directory + filename  # data_name+'_annotation.csv'
+    if not filename or not Path(pathologist_label_file).is_file():
+        pathologist_label = []
+        barcode_type = {cell_code: 0 for cell_code in cell_barcode}
+    else:
+        pathologist_label = []
+        with open(pathologist_label_file) as file:
+            csv_file = csv.reader(file, delimiter=",")
+            for line in csv_file:
+                pathologist_label.append(line)
+
+        barcode_type = {}  # filled below: numeric shape index per barcode
+
     ######################### read the CellNEST output in csv format ####################################################
     
     items = os.listdir(os.path.abspath(current_directory))
